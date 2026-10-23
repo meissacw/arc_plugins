@@ -17,7 +17,7 @@ hr{border:0;border-top:1px solid var(--line);margin:24px 0}
 img{max-width:100%;height:auto;border:1px solid var(--line);border-radius:4px}
 </style></head><body><main>
 <h1 id="tm1-v11--tm1-12-the-migration-guide">TM1 v11 → TM1 12: the migration guide</h1>
-<p>Created by Muhammad Eissa, Cubewise.</p>
+<p>Created by Muhammad Eissa, Cubewise — <a href="mailto:meissa@cubewise.com">meissa@cubewise.com</a>.</p>
 <p>This guide is for the consultant who moves a Planning Analytics v11 model to <strong>TM1 12</strong>, on PA as a Service or a local TM1 12 install. It covers the whole route: what breaks, what to prepare, how to run IBM's migration utility, and what to check afterwards.</p>
 <p>The <strong>TM1 12 Readiness</strong> plugin for Arc does the finding and most of the fixing (<strong>Tools → TM1 12 Readiness</strong>). Each section below says which tab to use.</p>
 <p><strong>Projects (optional).</strong> The <em>Project (optional)</em> field, first in the bar beside <em>Database</em>, starts a project in a folder you pick, or continues one. The folder keeps the scans, step status, results, the migrate.log you read, the action log and the backups. With a project open, backups go into its <code>backups/</code> folder instead of Downloads. A scan reopened from a project is shown at once and refreshes itself from the database; Apply stays disabled until the fresh scan is in, because Apply builds from the code a scan captured.</p>

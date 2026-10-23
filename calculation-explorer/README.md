@@ -1,6 +1,6 @@
 # Calculation Explorer plugin
 
-Created by Muhammad Eissa, Cubewise.
+Created by Muhammad Eissa, Cubewise — [meissa@cubewise.com](mailto:meissa@cubewise.com).
 
 Trace a TM1 cell from a cube view down through every rule, consolidation and cross-cube hop —
 and hand the result to someone else as a single interactive HTML file.
@@ -785,6 +785,10 @@ All three were found by driving the running app, not by reading docs:
 Before going any further we recommend reading these two help articles:
 * [How plugins work](https://code.cubewise.com/arc-docs/how-plugins-work)
 * [How to create your plugins](https://code.cubewise.com/arc-docs/how-to-create-your-plugins)
+
+## Contact
+
+Questions, feedback and bug reports: Muhammad Eissa, Cubewise — [meissa@cubewise.com](mailto:meissa@cubewise.com).
 
 ## License
 

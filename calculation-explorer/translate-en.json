@@ -206,6 +206,8 @@
    "CALCEXPLORER_ABOUTGUIDE": "User guide",
    "CALCEXPLORER_ABOUTGUIDEHELP": "Opens the illustrated guide Arc serves from this plugin's folder, so it matches the build you are running.",
    "CALCEXPLORER_ABOUTREADS": "Tracing only — this plugin never writes to your model.",
+   "CALCEXPLORER_ABOUTCONTACT": "Contact",
+   "CALCEXPLORER_ABOUTCONTACTHELP": "E-mail Muhammad Eissa, Cubewise: questions, feedback and bug reports.",
    "CALCEXPLORER_ABOUTCOST": "A trace builds only the levels you ask for. Depth and how wide the cell is decide what it costs — the guide has the measurements.",
    "CALCEXPLORER_PREVIEWTYPE": "Cell type",
    "CALCEXPLORER_PREVIEWELAPSED": "Round trip",

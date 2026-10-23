@@ -60,6 +60,10 @@ The plugin is enabled automatically. Arc records it in `plugins.yml`, in the sam
 
 ---
 
+## Contact
+
+Questions, feedback and bug reports: Muhammad Eissa, Cubewise — [meissa@cubewise.com](mailto:meissa@cubewise.com).
+
 ## License
 
 Released under the [MIT License](LICENSE), copyright Cubewise. You may use, copy, change and share

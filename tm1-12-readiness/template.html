@@ -1744,7 +1744,8 @@
       <div class="sm-panel sm-guide" saas-mig-fill="state.tab">
          <p><a href="__/plugins/tm1-12-readiness/MIGRATION-GUIDE.html" target="_blank"><i class="fa fa-external-link"></i> <span translate="SAASMIG_GUIDEFULL"></span></a>
             · <a href="__/plugins/tm1-12-readiness/USER-GUIDE.html" target="_blank"><i class="fa fa-picture-o"></i> <span translate="SAASMIG_USERGUIDE"></span></a>
-            · <span class="sm-muted" translate="SAASMIG_CREDIT"></span></p>
+            · <span class="sm-muted" translate="SAASMIG_CREDIT"></span>
+            · <a href="mailto:meissa@cubewise.com" title="{{ 'SAASMIG_CONTACTHELP' | translate }}"><i class="fa fa-envelope-o"></i> <span translate="SAASMIG_CONTACT"></span></a></p>
          <h4>1. Assess</h4>
          <ul>
             <li>Scan the v11 model here. The overview counts the processes that <b>will not compile on TM1 12</b> — any process with a BLOCKER. The migration utility carries them over and reports each on an error line ("Issue(s) found during TI Process migration"); they fail on TM1 12 until fixed. Its "Objects processed with problems" list is a different one: processes whose data-source file was not found. After the restore, the <b>Data files</b> tab uploads those files to the TM1 12 Files area and points each process at its new path.</li>

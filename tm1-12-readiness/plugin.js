@@ -23,7 +23,10 @@ arc.run(['$rootScope', 'saasMigrationCore', function ($rootScope, core) {
     * written into models are still found by a search. */
    $rootScope.plugin("tm1Readiness", "TM1 12 Readiness", "page", {
       menu: "tools",
-      icon: "fa-check-square-o",
+      /* The page heading's own icon (user, 2026-10-06): a checkbox among the
+       * Tools did not say "migration", and one icon on the menu and the page
+       * lets the eye find the entry it has already seen at the top of the page. */
+      icon: "fa-cloud-upload",
       // without a path Arc makes the route /tm-1-readiness/:instance -- it splits the digit off
       path: "/tm1-12-readiness/:instance",
       description: "Find, suggest and apply the fixes a TM1 v11 model needs before IBM's migration to TM1 v12 (PA as a Service).",
@@ -412,7 +415,7 @@ arc.factory("tm1ReadinessProject", ['$q', '$rootScope', 'saasMigrationCore', fun
 
 arc.factory("saasMigrationCore", [function () {
 
-   var VERSION = "1.0.1";
+   var VERSION = "1.0.2";
 
    // ---------------------------------------------------------------------------
    // Rule catalogue
@@ -1187,7 +1190,8 @@ arc.factory("saasMigrationCore", [function () {
     * subset's MDX on v11 and the rewrite on the scanned database before it is
     * offered (verifyRewrites). Each entry: { rule, fix, suggestion, extra }. */
    function removedFunctionRewrites(objectType, text, code, ctx) {
-      var out = [], st = null, inSubset = objectType === "Subset";
+      // a stored MDX view runs on its own like a subset, so its rewrite is checked the same way
+      var out = [], st = null, inSubset = objectType === "Subset" || objectType === "View";
       var S = function () { return st || (st = mdxStructure(code)); };
       var named = {};
       code.replace(/\bSET\s+(\[(?:[^\]]|\]\])*\]|\w+)\s+AS\b/ig, function (all, n) { named[n.toLowerCase()] = true; return all; });
@@ -1378,10 +1382,13 @@ arc.factory("saasMigrationCore", [function () {
    /* What the page adds to a checked rewrite's suggestion. */
    function checkNote(how, extra) {
       extra = extra || {};
+      // a view is compared as its rows and columns, a subset as its elements
+      var obj = extra.view ? "view" : "subset", unit = extra.view ? "row and column member" : "element";
+      var units = function (n) { return n + " " + unit + (n === 1 ? "" : "s"); };
       switch (how) {
-         case "same": return " Checked: the rewritten MDX returns the same " + extra.n + " element" + (extra.n === 1 ? "" : "s") + ", in the same order, as the subset on " + extra.from + ".";
-         case "differs": return " Not offered: the rewritten MDX returns " + extra.got + " element" + (extra.got === 1 ? "" : "s") + " where the subset returns " + extra.want + " on " + extra.from + ". Rewrite: " + extra.replacement;
-         case "v11fails": return " Not offered: the subset's MDX fails on " + extra.from + " too (" + extra.error + "), so there is no result to keep. Rewrite: " + extra.replacement;
+         case "same": return " Checked: the rewritten MDX returns the same " + units(extra.n) + ", in the same order, as the " + obj + " on " + extra.from + ".";
+         case "differs": return " Not offered: the rewritten MDX returns " + units(extra.got) + " where the " + obj + " returns " + extra.want + " on " + extra.from + ". Rewrite: " + extra.replacement;
+         case "v11fails": return " Not offered: the " + obj + "'s MDX fails on " + extra.from + " too (" + extra.error + "), so there is no result to keep. Rewrite: " + extra.replacement;
          case "fails": return " Not offered: the rewritten MDX fails (" + extra.error + "). Rewrite: " + extra.replacement;
          case "nosource": return " Not offered yet: pick the original v11 database as the comparison database, and the rewrite is checked against it and offered. Rewrite: " + extra.replacement;
          default: return "";
@@ -1394,6 +1401,7 @@ arc.factory("saasMigrationCore", [function () {
    function basisSuggestion(objectType, how, extra) {
       extra = extra || {};
       var head = "TM1SubsetBasis() is not supported in TM1 v12 (IBM): the whole MDX fails. It stood for the element list saved with the subset when its expression was recorded, and TM1 12 keeps no such list. ";
+      if (objectType === "View") return head + "An MDX view has no stored list to read it from: replace the call by the set it should be.";
       if (objectType !== "Subset") return head + "MDX written in TI has no stored list (v11 fails it too, \"Cannot resolve TM1 subset\"): replace the call by the set it should be.";
       switch (how) {
          case "rewrite": return head + "The list was read from " + extra.from + (extra.via ? " (" + extra.via + ")" : "") + ": " + extra.count + " element" + (extra.count === 1 ? "" : "s") + ". The rewrite " +
@@ -1522,7 +1530,7 @@ arc.factory("saasMigrationCore", [function () {
                rule: "mdx.elementSecurity", severity: "INFO", objectType: u.objectType, object: u.object,
                procedure: u.procedure, line: u.line, statement: u.statement, fix: "MANUAL", tm1Applications: !!u.tm1Applications,
                referenced: r.element, dimension: r.dimension, groups: [], tpGroups: tp,
-               dimensionName: u.dimensionName, hierarchyName: u.hierarchyName, subsetName: u.subsetName,
+               dimensionName: u.dimensionName, hierarchyName: u.hierarchyName, subsetName: u.subsetName, cubeName: u.cubeName, viewName: u.viewName,
                suggestion: "Names " + r.reference + ", which only TM1 Applications group" + (tp.length === 1 ? "" : "s") + " cannot read (" + tp.join(", ") + "). " +
                   "The migration removes TM1 Applications and its }tp_ groups, so nothing needs to change for them."
             });
@@ -1532,7 +1540,7 @@ arc.factory("saasMigrationCore", [function () {
             rule: "mdx.elementSecurity", severity: u.severity, objectType: u.objectType, object: u.object,
             procedure: u.procedure, line: u.line, statement: u.statement, fix: "MANUAL", tm1Applications: !!u.tm1Applications,
             referenced: r.element, dimension: r.dimension, groups: none, tpGroups: tp,
-            dimensionName: u.dimensionName, hierarchyName: u.hierarchyName, subsetName: u.subsetName,
+            dimensionName: u.dimensionName, hierarchyName: u.hierarchyName, subsetName: u.subsetName, cubeName: u.cubeName, viewName: u.viewName,
             suggestion: "Names " + r.reference + ", which " + none.length + " group" + (none.length === 1 ? "" : "s") + " cannot read (" + named + ")." + tpNote + " " +
                "TM1 v12 applies element security before the MDX runs, so for their users this " +
                (u.objectType === "Subset" ? "subset fails or comes back empty" : "MDX fails or comes back empty when they run it") +
@@ -2626,9 +2634,20 @@ arc.factory("saasMigrationCore", [function () {
             });
          });
       });
+      /* An MDX view's MDX goes through the subset checks (issue #4, 2026-10-09).
+       * Until then only view names were read, and an MDX view the demo model
+       * did not have -- FILTER on [Retailers].[Caption_Default] -- returned 10
+       * rows on 11.8 and failed on 12.6.4 ("Expected a member name but found
+       * Caption_Default") with nothing reported. A native view has no MDX. */
       (model.views || []).forEach(function (c) {
          (c.Views || []).forEach(function (v) {
-            scanName("View", v.Name, c.Name).forEach(function (f) { f.cubeName = c.Name; f.viewName = v.Name; findings.push(f); });
+            var label = c.Name + " / " + v.Name;
+            var place = function (f) { f.cubeName = c.Name; f.viewName = v.Name; findings.push(f); };
+            scanName("View", v.Name, c.Name).forEach(place);
+            if (!v.MDX) return;
+            addRefs(v.MDX, { severity: "BREAKS", objectType: "View", object: label, procedure: "MDX", line: null,
+               statement: v.MDX, cubeName: c.Name, viewName: v.Name });
+            scanMdx("View", label, null, v.MDX, ctx).forEach(place);
          });
       });
       // MDX strings built in TI (SubsetCreateByMDX / ViewCreateByMDX): the literal parts
@@ -6009,7 +6028,7 @@ arc.directive("tm1Readiness", function () {
                      });
                      return chain;
                   })
-                  .then(function () { return step("SAASMIG_READVIEWS", "/Cubes?$select=Name&$expand=Views($select=Name)", "views"); })
+                  .then(function () { return step("SAASMIG_READVIEWS", "/Cubes?$select=Name&$expand=Views($select=Name,ibm.tm1.api.v1.MDXView/MDX)", "views"); })
                   .then(function () { return step("SAASMIG_READCHORES", "/Chores?$select=Name&$expand=Tasks($expand=Process($select=Name))", "chores"); })
                   .then(function () { return readCfg(inst); })
                   .then(function () {
@@ -6211,9 +6230,11 @@ arc.directive("tm1Readiness", function () {
             var verifyRewrites = function (inst, result) {
                var bySub = {}, order = [];
                result.findings.forEach(function (f) {
-                  if (!f.check || f.fix !== "REWRITE" || f.objectType !== "Subset") return;
-                  if (!bySub[f.object]) { bySub[f.object] = []; order.push(f.object); }
-                  bySub[f.object].push(f);
+                  if (!f.check || f.fix !== "REWRITE" || (f.objectType !== "Subset" && f.objectType !== "View")) return;
+                  // by type too: a subset "d / x" and a view "c / x" can share a label
+                  var k = f.objectType + "|" + f.object;
+                  if (!bySub[k]) { bySub[k] = []; order.push(k); }
+                  bySub[k].push(f);
                });
                if (!order.length) return $q.when();
                var v12 = $scope.isV12();
@@ -6225,7 +6246,19 @@ arc.directive("tm1Readiness", function () {
                      f.suggestion += core.checkNote(how, angular.extend({ replacement: f.replacement }, extra));
                   });
                };
-               var run = function (db, mdx) {
+               /* A view is a whole query: its rows and columns are compared, axis
+                * by axis (the axis number makes a member that moves axes a
+                * difference), and the cellset is dropped after the read. */
+               var run = function (db, mdx, view) {
+                  if (view) return call(db, "POST", "/ExecuteMDX?$expand=Axes($expand=Tuples($expand=Members($select=Name)))", { MDX: mdx }).then(function (r) {
+                     if (!ok(r)) return { error: errorText(r) };
+                     if (r.data.ID) call(db, "DELETE", "/Cellsets('" + r.data.ID + "')");
+                     var names = [];
+                     (r.data.Axes || []).forEach(function (a, i) {
+                        (a.Tuples || []).forEach(function (tp) { names.push(i + "|" + tp.Members.map(function (m) { return m.Name; }).join("*")); });
+                     });
+                     return { names: names };
+                  });
                   return call(db, "POST", "/ExecuteMDXSetExpression?$expand=Tuples($expand=Members($select=Name))", { MDX: mdx }).then(function (r) {
                      if (!ok(r)) return { error: errorText(r) };
                      return { names: (r.data.Tuples || []).map(function (tp) { return tp.Members.map(function (m) { return m.Name; }).join("*"); }) };
@@ -6236,16 +6269,16 @@ arc.directive("tm1Readiness", function () {
                   var fs = bySub[key];
                   chain = chain.then(function () {
                      if (!v11db) { note(fs, "nosource", {}); return; }
-                     $scope.state.busy = t("SAASMIG_CHECKINGREWRITE", { name: key });
-                     var f0 = fs[0];
-                     var all = result.findings.filter(function (x) { return x.objectType === "Subset" && x.object === key && !$scope.isSkipped(x); });
+                     $scope.state.busy = t("SAASMIG_CHECKINGREWRITE", { name: fs[0].object });
+                     var f0 = fs[0], view = f0.objectType === "View";
+                     var all = result.findings.filter(function (x) { return x.objectType === f0.objectType && x.object === f0.object && !$scope.isSkipped(x); });
                      var fixed = core.fixMdx(f0.statement, all);
-                     return run(v11db, f0.statement).then(function (want) {
-                        if (want.error) { note(fs, "v11fails", { from: v11db, error: want.error }); return; }
-                        return run(inst, fixed).then(function (got) {
-                           if (got.error) note(fs, "fails", { error: got.error });
-                           else if (got.names.join("\u0001") === want.names.join("\u0001")) note(fs, "same", { n: want.names.length, from: v11db });
-                           else note(fs, "differs", { got: got.names.length, want: want.names.length, from: v11db });
+                     return run(v11db, f0.statement, view).then(function (want) {
+                        if (want.error) { note(fs, "v11fails", { from: v11db, error: want.error, view: view }); return; }
+                        return run(inst, fixed, view).then(function (got) {
+                           if (got.error) note(fs, "fails", { error: got.error, view: view });
+                           else if (got.names.join("\u0001") === want.names.join("\u0001")) note(fs, "same", { n: want.names.length, from: v11db, view: view });
+                           else note(fs, "differs", { got: got.names.length, want: want.names.length, from: v11db, view: view });
                         });
                      });
                   });
@@ -6421,7 +6454,7 @@ arc.directive("tm1Readiness", function () {
 
             $scope.fixable = function (f) {
                return (f.objectType === "Process" && (f.fix === "REMOVE" || f.fix === "STUB" || f.fix === "REWRITE") ||
-                  f.objectType === "Subset" && f.fix === "REWRITE") && !$scope.isSkipped(f);
+                  (f.objectType === "Subset" || f.objectType === "View") && f.fix === "REWRITE") && !$scope.isSkipped(f);
             };
             $scope.targetKey = function (f) { return f.objectType + "|" + f.object; };
             $scope.isSelected = function (f) { return !!$scope.state.selected[$scope.targetKey(f)]; };
@@ -6618,6 +6651,18 @@ arc.directive("tm1Readiness", function () {
                      hunks: [{ procedure: "MDX", rows: core.diffHunks(f0.statement, after, 2) }]
                   };
                }
+               if (type === "View") {
+                  var vs = s.findings.filter(function (x) { return x.objectType === "View" && x.object === name && x.procedure === "MDX"; });
+                  var v0 = vs[0];
+                  var vlive = vs.filter(function (x) { return !$scope.isSkipped(x); });
+                  var vafter = core.fixMdx(v0.statement, vlive);
+                  return {
+                     type: type, name: name, view: { cube: v0.cubeName, name: v0.viewName },
+                     beforeMdx: v0.statement, afterMdx: vafter,
+                     fix: { fixable: true, changed: vafter !== v0.statement, removed: vlive, blockers: [], kept: vs.filter($scope.isSkipped) },
+                     hunks: [{ procedure: "MDX", rows: core.diffHunks(v0.statement, vafter, 2) }]
+                  };
+               }
                return null;
             };
 
@@ -6636,6 +6681,7 @@ arc.directive("tm1Readiness", function () {
 
             $scope.applyNoteKey = function (type) {
                if (type === "Subset") return $scope.isV12() ? "SAASMIG_APPLYNOTE_SUBSETV12" : "SAASMIG_APPLYNOTE_SUBSET";
+               if (type === "View") return $scope.isV12() ? "SAASMIG_APPLYNOTE_VIEWV12" : "SAASMIG_APPLYNOTE_VIEW";
                return $scope.isV12() ? "SAASMIG_APPLYNOTE_PROCESSV12" : "SAASMIG_APPLYNOTE_PROCESS";
             };
             /* The corrected TI statement (or MDX), to paste: Apply does not edit
@@ -6769,6 +6815,30 @@ arc.directive("tm1Readiness", function () {
                });
             };
 
+            /* An MDX view is written as a subset is: PATCH the MDX, then re-read it
+             * (measured 2026-10-09 on 11.8: PATCH {MDX} answers 200 and reads back
+             * as sent, with or without the @odata.type). */
+            var viewPath = function (v) { return core.path([["Cubes", v.cube], ["Views", v.name]]); };
+            var applyView = function (inst, prev) {
+               var path = viewPath(prev.view);
+               return call(inst, "PATCH", path, { "@odata.type": "ibm.tm1.api.v1.MDXView", MDX: prev.afterMdx }).then(function (r) {
+                  must(r);
+                  return call(inst, "GET", path + "?$select=Name,ibm.tm1.api.v1.MDXView/MDX");
+               }).then(function (r) {
+                  must(r);
+                  if (r.data.MDX !== prev.afterMdx) throw new Error(t("SAASMIG_REREADMISMATCH") + " MDX");
+                  var f = $scope.state.scan.findings.filter(function (x) { return x.objectType === "View" && x.object === prev.name; })[0];
+                  updateViewModel(prev.view, prev.afterMdx);
+                  return { applied: true, finding: f };
+               });
+            };
+            var updateViewModel = function (v, mdx) {
+               ($scope.state.scan.model.views || []).forEach(function (c) {
+                  if (c.Name !== v.cube) return;
+                  (c.Views || []).forEach(function (x) { if (x.Name === v.name) x.MDX = mdx; });
+               });
+            };
+
             var updateSubsetModel = function (s, expr) {
                ($scope.state.scan.model.dimensions || []).forEach(function (d) {
                   if (d.Name !== s.dimension) return;
@@ -6785,6 +6855,7 @@ arc.directive("tm1Readiness", function () {
                   core.PROCEDURES.forEach(function (k) { b.before[k] = prev.before[k] || ""; });
                   return b;
                }
+               if (prev.type === "View") return { type: "View", name: prev.name, view: prev.view, before: { MDX: prev.beforeMdx } };
                return { type: "Subset", name: prev.name, subset: prev.subset, before: { Expression: prev.beforeMdx } };
             };
 
@@ -6802,7 +6873,7 @@ arc.directive("tm1Readiness", function () {
                   chain = chain.then(function () {
                      if ($scope.state.cancel) throw new Error(t("SAASMIG_CANCELLED"));
                      $scope.state.busy = t("SAASMIG_APPLYING", { name: prev.name, i: done + 1, n: todo.length });
-                     return (prev.type === "Process" ? applyProcess(inst, prev) : applySubset(inst, prev)).then(function (res) {
+                     return (prev.type === "Process" ? applyProcess(inst, prev) : prev.type === "View" ? applyView(inst, prev) : applySubset(inst, prev)).then(function (res) {
                         done++;
                         log("apply", prev.type + " " + prev.name + ": " + t(res && res.manual ? "SAASMIG_APPLIEDMANUAL" : "SAASMIG_APPLIED"));
                         return res;
@@ -8611,6 +8682,12 @@ arc.directive("tm1Readiness", function () {
                         var sp = core.path([["Dimensions", e.subset.dimension], ["Hierarchies", e.subset.hierarchy], ["Subsets", e.subset.name]]);
                         return call(inst, "PATCH", sp, { Expression: e.before.Expression }).then(must).then(function () {
                            if ($scope.state.scan) updateSubsetModel(e.subset, e.before.Expression);
+                           done++;
+                        });
+                     }
+                     if (e.type === "View") {
+                        return call(inst, "PATCH", viewPath(e.view), { "@odata.type": "ibm.tm1.api.v1.MDXView", MDX: e.before.MDX }).then(must).then(function () {
+                           if ($scope.state.scan) updateViewModel(e.view, e.before.MDX);
                            done++;
                         });
                      }

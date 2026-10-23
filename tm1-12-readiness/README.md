@@ -1,6 +1,6 @@
 # TM1 12 Readiness — an Arc for TM1 plugin
 
-Created by Muhammad Eissa, Cubewise.
+Created by Muhammad Eissa, Cubewise — [meissa@cubewise.com](mailto:meissa@cubewise.com).
 
 This plugin prepares a TM1 v11 model for IBM's **Database Migration Utility** (`migrate_tm1`),
 which moves it to **TM1 v12**, on PA as a Service or a local install. It also checks the
@@ -82,6 +82,10 @@ Arc picks up a new plugin folder by itself; `plugins.yml` does not need editing.
 | `bedrock/bedrock.json` | optional, and **not in the public release**: an offline copy of Bedrock 5's installer asset, under Bedrock's own licence (`bedrock/LICENSE.md`, which does not allow publishing it on a web site without permission). Without it the Bedrock tab reads Bedrock 5 from github.com/cubewise-code/bedrock-5, and offers no other source |
 
 The tests and the build tools live in the development repository, which is not published.
+
+## Contact
+
+Questions, feedback and bug reports: Muhammad Eissa, Cubewise — [meissa@cubewise.com](mailto:meissa@cubewise.com).
 
 ## License
 

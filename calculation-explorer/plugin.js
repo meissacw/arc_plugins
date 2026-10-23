@@ -313,7 +313,7 @@ arc.factory("calcExplorerCore", [function () {
     * compares the two on purpose: warning when the running Arc differs from
     * ARC_BUILD is 5 item 17, and it is a feature with a wording decision in it,
     * not something to bolt on while passing. */
-   var VERSION = "1.19.0";
+   var VERSION = "1.19.1";
    var ARC_BUILD = "6.0.0";
 
    // ---------------------------------------------------------------

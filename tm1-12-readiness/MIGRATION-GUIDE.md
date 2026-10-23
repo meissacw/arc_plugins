@@ -1,6 +1,6 @@
 # TM1 v11 → TM1 12: the migration guide
 
-Created by Muhammad Eissa, Cubewise.
+Created by Muhammad Eissa, Cubewise — [meissa@cubewise.com](mailto:meissa@cubewise.com).
 
 This guide is for the consultant who moves a Planning Analytics v11 model to **TM1 12**, on PA as
 a Service or a local TM1 12 install. It covers the whole route: what breaks, what to prepare, how
